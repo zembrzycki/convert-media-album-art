@@ -1,0 +1,12 @@
+{
+  "domain": "convert_media_album_art",
+  "name": "Convert Media Album Art",
+  "codeowners": ["@zembrzycki"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/zembrzycki/HACS-integration-convert-media-album-art",
+  "integration_type": "service",
+  "iot_class": "local_polling",
+  "requirements": ["Pillow>=10.0.0"],
+  "version": "1.0.0"
+}

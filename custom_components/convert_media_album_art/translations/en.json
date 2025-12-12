@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Convert Media Album Art",
+        "description": "Configure album art conversion for your ESPHome display",
+        "data": {
+          "media_player": "Media Player Entity",
+          "output_dir": "Output Directory (relative to config)",
+          "output_filename": "Output Filename",
+          "default_image": "Default Image Filename",
+          "image_size": "Image Size (pixels, square)"
+        }
+      }
+    },
+    "error": {
+      "invalid_media_player": "The specified media player entity does not exist"
+    },
+    "abort": {
+      "already_configured": "This media player is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Convert Media Album Art Options",
+        "description": "Update album art conversion settings",
+        "data": {
+          "media_player": "Media Player Entity",
+          "output_dir": "Output Directory",
+          "output_filename": "Output Filename",
+          "default_image": "Default Image Filename",
+          "image_size": "Image Size (pixels)"
+        }
+      }
+    }
+  }
+}

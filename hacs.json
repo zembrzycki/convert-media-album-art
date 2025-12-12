@@ -1,0 +1,8 @@
+{
+  "name": "Convert Media Album Art",
+  "content_in_root": false,
+  "render_readme": true,
+  "domains": ["media_player"],
+  "iot_class": "Local Polling",
+  "homeassistant": "2024.1.0"
+}
