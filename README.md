@@ -18,7 +18,7 @@ A Home Assistant custom integration that monitors a media player entity and auto
 2. Click on "Integrations"
 3. Click the three dots in the top right corner
 4. Select "Custom repositories"
-5. Add this repository URL: `https://github.com/zembrzycki/HACS-integration-convert-media-album-art`
+5. Add this repository URL: https://github.com/zembrzycki/convert-media-album-art
 6. Select category "Integration"
 7. Click "Add"
 8. Find "Convert Media Album Art" in the integrations list
