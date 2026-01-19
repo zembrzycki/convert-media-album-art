@@ -25,6 +25,10 @@ A Home Assistant custom integration that monitors a media player entity and auto
 9. Click "Download"
 10. Restart Home Assistant
 
+
+<img width="263" height="53" alt="Screenshot 2026-01-19 at 10 49 16 am" src="https://github.com/user-attachments/assets/226da99c-4d6c-4904-871d-58df9f79a40a" />
+
+
 ### Manual Installation
 
 1. Copy the `custom_components/convert_media_album_art` directory to your Home Assistant's `custom_components` directory
@@ -41,6 +45,15 @@ A Home Assistant custom integration that monitors a media player entity and auto
    - **Output Filename**: Name of the output file (default: `media_album.bmp`)
    - **Default Image**: Fallback image filename (default: `blank_album.bmp`)
    - **Image Size**: Square dimensions in pixels (default: 200)
+
+
+
+<img width="422" height="615" alt="Screenshot 2026-01-19 at 10 50 57 am" src="https://github.com/user-attachments/assets/23453808-2436-438b-b8b5-dfcac26728ca" />
+
+
+<img width="327" height="152" alt="Screenshot 2026-01-19 at 10 47 52 am" src="https://github.com/user-attachments/assets/3170ff3b-3eb7-4492-aca8-a5886230b119" />
+
+
 
 ## Usage
 
