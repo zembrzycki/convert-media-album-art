@@ -13,10 +13,12 @@ from .const import (
     CONF_OUTPUT_FILENAME,
     CONF_DEFAULT_IMAGE,
     CONF_IMAGE_SIZE,
+    CONF_ESPHOME_BASE_URL,
     DEFAULT_OUTPUT_DIR,
     DEFAULT_OUTPUT_FILENAME,
     DEFAULT_IMAGE_SIZE,
     DEFAULT_DEFAULT_IMAGE,
+    DEFAULT_ESPHOME_BASE_URL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -34,7 +36,7 @@ class ConvertMediaAlbumArtConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             # Validate media player entity exists
             media_player = user_input[CONF_MEDIA_PLAYER]
-            
+
             if not self.hass.states.get(media_player):
                 errors["base"] = "invalid_media_player"
             else:
@@ -71,6 +73,15 @@ class ConvertMediaAlbumArtConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_IMAGE_SIZE,
                     default=DEFAULT_IMAGE_SIZE,
                 ): vol.All(vol.Coerce(int), vol.Range(min=50, max=1000)),
+                # Blank = auto-detect via Home Assistant's own configured
+                # internal/external URL (Settings > System > Network).
+                # Set this explicitly only if your ESPHome devices need a
+                # different host/port to reach HA than HA uses for itself
+                # (e.g. different VLAN, reverse proxy, split-horizon DNS).
+                vol.Optional(
+                    CONF_ESPHOME_BASE_URL,
+                    default=DEFAULT_ESPHOME_BASE_URL,
+                ): str,
             }
         )
 
@@ -130,6 +141,10 @@ class ConvertMediaAlbumArtOptionsFlow(config_entries.OptionsFlow):
                     CONF_IMAGE_SIZE,
                     default=current_data.get(CONF_IMAGE_SIZE, DEFAULT_IMAGE_SIZE),
                 ): vol.All(vol.Coerce(int), vol.Range(min=50, max=1000)),
+                vol.Optional(
+                    CONF_ESPHOME_BASE_URL,
+                    default=current_data.get(CONF_ESPHOME_BASE_URL, DEFAULT_ESPHOME_BASE_URL),
+                ): str,
             }
         )
 

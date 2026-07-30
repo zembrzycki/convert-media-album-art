@@ -1,5 +1,6 @@
 """Image conversion logic for Convert Media Album Art."""
 
+import asyncio
 import logging
 import os
 import io
@@ -56,34 +57,53 @@ class ImageConverter:
 
     async def download_image(self, url):
         """Download image from URL."""
+        # Handle relative URLs by prepending base URL
+        if url.startswith("/"):
+            base_url = self._get_base_url()
+            url = f"{base_url}{url}"
+
+        # Always log the fully-resolved URL at warning level when something
+        # goes wrong below, so we don't need debug logging enabled to see
+        # exactly what was requested.
+        _LOGGER.info("Downloading image from: %s", url)
+
         try:
-            # Handle relative URLs by prepending base URL
-            if url.startswith("/"):
-                base_url = self._get_base_url()
-                url = f"{base_url}{url}"
-
-            _LOGGER.info("Downloading image from: %s", url)
-
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
                     if response.status != 200:
-                        _LOGGER.error("Failed to download image: HTTP %s", response.status)
+                        _LOGGER.error(
+                            "Failed to download image: HTTP %s (url=%s)",
+                            response.status,
+                            url,
+                        )
                         return None
 
                     image_data = await response.read()
 
                     if not image_data:
-                        _LOGGER.error("Downloaded image is empty")
+                        _LOGGER.error("Downloaded image is empty (url=%s)", url)
                         return None
 
                     _LOGGER.info("Successfully downloaded %d bytes", len(image_data))
                     return image_data
 
-        except aiohttp.ClientError as err:
-            _LOGGER.error("Network error downloading image: %s", err)
+        except asyncio.TimeoutError:
+            _LOGGER.error("Timed out downloading image after 10s (url=%s)", url)
             return None
-        except Exception as err:
-            _LOGGER.error("Unexpected error downloading image: %s", err)
+        except aiohttp.ClientError as err:
+            _LOGGER.error(
+                "Network error downloading image (%s: %s) (url=%s)",
+                type(err).__name__,
+                err,
+                url,
+            )
+            return None
+        except Exception:
+            # Use exception() instead of error() so the full traceback lands
+            # in the log - "Unexpected error" with no details isn't
+            # actionable, and several common exceptions (TimeoutError,
+            # ServerDisconnectedError, CancelledError) stringify to "".
+            _LOGGER.exception("Unexpected error downloading image (url=%s)", url)
             return None
 
     def convert_to_bmp(self, image_data):
