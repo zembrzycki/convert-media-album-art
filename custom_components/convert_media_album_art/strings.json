@@ -9,7 +9,11 @@
           "output_dir": "Output Directory (relative to config)",
           "output_filename": "Output Filename",
           "default_image": "Default Image Filename",
-          "image_size": "Image Size (pixels, square)"
+          "image_size": "Image Size (pixels, square)",
+          "esphome_base_url": "ESPHome Base URL"
+        },
+        "data_description": {
+          "esphome_base_url": "The address your ESPHome devices should use to reach Home Assistant. Leave blank to auto-detect using HA's own configured URL. Example: http://10.10.10.9"
         }
       }
     },
@@ -30,7 +34,11 @@
           "output_dir": "Output Directory",
           "output_filename": "Output Filename",
           "default_image": "Default Image Filename",
-          "image_size": "Image Size (pixels)"
+          "image_size": "Image Size (pixels)",
+          "esphome_base_url": "ESPHome Base URL"
+        },
+        "data_description": {
+          "esphome_base_url": "The address your ESPHome devices should use to reach Home Assistant. Leave blank to auto-detect using HA's own configured URL. Example: http://10.10.10.9"
         }
       }
     }
