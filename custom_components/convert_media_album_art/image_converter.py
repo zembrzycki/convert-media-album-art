@@ -6,6 +6,7 @@ import io
 import aiohttp
 from PIL import Image
 from pathlib import Path
+from homeassistant.helpers.network import get_url, NoURLAvailableError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,15 +21,15 @@ class ImageConverter:
         self.output_filename = config.get("output_filename", "esp_album_art.bmp")
         self.default_image = config.get("default_image", "blank_album.bmp")
         self.image_size = config.get("image_size", 200)
-        
+
         # Construct full paths
         self.config_dir = Path(hass.config.path())
         self.output_path = self.config_dir / self.output_dir / self.output_filename
         self.default_path = self.config_dir / self.output_dir / self.default_image
-        
+
         # Ensure output directory exists
         self.output_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         _LOGGER.info(
             "ImageConverter initialized: output=%s, default=%s, size=%dx%d",
             self.output_path,
@@ -38,20 +39,20 @@ class ImageConverter:
         )
 
     def _get_base_url(self):
-        """Get the base URL for Home Assistant, ensuring it includes port."""
-        # Try external URL first, then internal URL
-        base_url = self.hass.config.external_url or self.hass.config.internal_url
-        
-        if base_url:
-            # If URL doesn't have port 8123 and isn't using standard ports, add it
-            if ":8123" not in base_url and not base_url.endswith(":80") and not base_url.endswith(":443"):
-                # Remove trailing slash if present
-                base_url = base_url.rstrip('/')
-                base_url = f"{base_url}:8123"
-            return base_url
-        
-        # Fallback: use localhost with port 8123
-        return "http://localhost:8123"
+        """Get the base URL for Home Assistant.
+
+        Uses HA's own URL resolver instead of guessing a port, so this
+        keeps working no matter what port the frontend/API is bound to.
+        """
+        try:
+            return get_url(self.hass, allow_cloud=False)
+        except NoURLAvailableError:
+            _LOGGER.warning(
+                "No internal or external URL configured in Home Assistant; "
+                "falling back to localhost"
+            )
+            port = getattr(self.hass.config.api, "port", 8123)
+            return f"http://localhost:{port}"
 
     async def download_image(self, url):
         """Download image from URL."""
@@ -60,24 +61,24 @@ class ImageConverter:
             if url.startswith("/"):
                 base_url = self._get_base_url()
                 url = f"{base_url}{url}"
-            
+
             _LOGGER.info("Downloading image from: %s", url)
-            
+
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
                     if response.status != 200:
                         _LOGGER.error("Failed to download image: HTTP %s", response.status)
                         return None
-                    
+
                     image_data = await response.read()
-                    
+
                     if not image_data:
                         _LOGGER.error("Downloaded image is empty")
                         return None
-                    
+
                     _LOGGER.info("Successfully downloaded %d bytes", len(image_data))
                     return image_data
-                    
+
         except aiohttp.ClientError as err:
             _LOGGER.error("Network error downloading image: %s", err)
             return None
@@ -90,21 +91,21 @@ class ImageConverter:
         try:
             # Load image from bytes
             image = Image.open(io.BytesIO(image_data))
-            
+
             _LOGGER.debug(
                 "Original image: mode=%s, size=%s",
                 image.mode,
                 image.size,
             )
-            
+
             # Convert to RGB (remove alpha channel, handle all formats)
             if image.mode != "RGB":
                 image = image.convert("RGB")
-            
+
             # Resize to target size (forcing aspect ratio)
             target_size = (self.image_size, self.image_size)
             image = image.resize(target_size, Image.Resampling.LANCZOS)
-            
+
             # Save as 24-bit BMP (BMP3 format)
             output_buffer = io.BytesIO()
             image.save(
@@ -112,15 +113,15 @@ class ImageConverter:
                 format="BMP",
                 bits=8,  # 8 bits per channel = 24-bit color
             )
-            
+
             _LOGGER.debug(
                 "Converted image: size=%s, output_bytes=%d",
                 image.size,
                 output_buffer.tell(),
             )
-            
+
             return output_buffer.getvalue()
-            
+
         except Exception as err:
             _LOGGER.error("Error converting image: %s", err)
             return None
@@ -133,26 +134,26 @@ class ImageConverter:
             if not image_data:
                 _LOGGER.warning("Failed to download image, using default")
                 return await self.use_default_image()
-            
+
             # Convert to BMP
             bmp_data = self.convert_to_bmp(image_data)
             if not bmp_data:
                 _LOGGER.warning("Failed to convert image, using default")
                 return await self.use_default_image()
-                            
+
             # Save to output file
             await self.hass.async_add_executor_job(
                 self._write_file,
                 self.output_path,
                 bmp_data,
             )
-            
+
             _LOGGER.info(
                 "Successfully converted and saved album art to %s",
                 self.output_path,
             )
             return True
-            
+
         except Exception as err:
             _LOGGER.error("Unexpected error in convert_and_save: %s", err)
             return await self.use_default_image()
@@ -167,17 +168,17 @@ class ImageConverter:
                 )
                 await self._create_blank_image()
                 return False
-            
+
             # Copy default to output
             await self.hass.async_add_executor_job(
                 self._copy_file,
                 self.default_path,
                 self.output_path,
             )
-            
+
             _LOGGER.info("Used default image: %s", self.default_path)
             return True
-            
+
         except Exception as err:
             _LOGGER.error("Error using default image: %s", err)
             # Last resort: create a blank image
@@ -186,22 +187,22 @@ class ImageConverter:
 
     async def _create_blank_image(self):
         """Create a blank black image as ultimate fallback."""
-        try:                
+        try:
             # Create blank RGB image
             blank = Image.new("RGB", (self.image_size, self.image_size), (0, 0, 0))
-            
+
             # Save as BMP
             output_buffer = io.BytesIO()
             blank.save(output_buffer, format="BMP", bits=8)
-            
+
             await self.hass.async_add_executor_job(
                 self._write_file,
                 self.output_path,
                 output_buffer.getvalue(),
             )
-            
+
             _LOGGER.info("Created blank fallback image")
-            
+
         except Exception as err:
             _LOGGER.error("Failed to create blank image: %s", err)
 
